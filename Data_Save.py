@@ -1,5 +1,10 @@
 '''
+Andrew Antczak
+July 2020
+
+
 This code will download daily pricing data, on a minutely basis, to our SP500 directory.
+We are choosing to limit this data storage to the SP500 with the obvious knowledge that his can be changed and re-organized at any time.
 '''
 
 import os
@@ -25,14 +30,19 @@ from dateutil.parser import parse
 import time as tm
 from Functions.Alpaca_Key_Store import initiate_API_keys
 # ---------------------------------------------------------------------------------------------------------------------#
+'''
+This block of code is connecting the code to our Alpaca account which gives us unlimited access to Polygon's API.
+The data we use from Polygon is strictly pricing data; in this case, minutely. 
+
+NOTE: This code will not function in its raw form as the API Keys have not been included, for obvious reasons.
+'''
+
 ALPACA_API_KEY, ALPACA_SECRET_KEY, ALPACA_API_BASE_URL = initiate_API_keys()
 ALPACA_PAPER = True
 api = tradeapi.REST(ALPACA_API_KEY, ALPACA_SECRET_KEY, ALPACA_API_BASE_URL, 'v2')
 # ---------------------------------------------------------------------------------------------------------------------#
 pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
-
-style.use('seaborn')
 
 
 class Data_Save():
@@ -47,6 +57,7 @@ class Data_Save():
         today = time.mktime(dt.datetime.strptime(self.start_date, "%Y-%m-%d").timetuple())
         s_today = str(dt.datetime.fromtimestamp(today))[0:10]
         end_date = False
+        # We are saving files per stock, per day.
 
         while end_date is False:
 
@@ -82,6 +93,8 @@ class Data_Save():
                 try:
                     df = df.truncate(before=in_s, after=in_e)
                     l_df = len(df)
+                    # Should a certain stock not have enough data on a certain day, we skip that stock on that day.
+                    # I created the threshold to be roughly 85% of the day's pricing data. 
                     if l_df < 330:
                         df = df.empty
                         continue
@@ -92,6 +105,8 @@ class Data_Save():
 
                 df = df.reset_index(drop=True)
                 filename = '../Data_Store/SP500_Price_Data/{}_{}.pk'.format(ticker, s_today)
+                # This depends on where the pricing data is located on your local drive.
+                # Here, I've left it in its original form for example.
                 with open(filename, 'wb') as file:
                     pickle.dump(df, file)
 
@@ -105,6 +120,8 @@ class Data_Save():
 
         return
 
+'''
+This chunk of code is originally from sentdex (YouTuber). It simply grabs the tickers for the SP500
 
 resp = requests.get('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
 soup = bs.BeautifulSoup(resp.text, "lxml")
@@ -118,9 +135,14 @@ for row in table.findAll('tr')[1:]:
     tickers_trial.append(ticker)
 
 tickers = tickers_trial
+'''
 
-# Simply change the end date to the start date and fill in a new end date!
+# Add any date range you want.
 ds = Data_Save('2020-08-05', '2020-10-14')
+
+
+# The remaining lines of code are meant to activate the above function such that the download will begin. 
+# More importantly, however, is that we are utilizing multiprocessing capabilities to make the download occur quicker.
 
 t_len = float(len(tickers))
 
