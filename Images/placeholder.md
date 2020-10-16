@@ -1,0 +1,1 @@
+Folder storing all images.
