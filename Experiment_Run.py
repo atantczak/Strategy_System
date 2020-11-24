@@ -464,7 +464,7 @@ for row in table.findAll('tr')[1:]:
     tickers.append(ticker)
 
 # This line simply selects N random stocks out of the 500 within the SP500.
-tickers = rand.sample(tickers, 10)
+tickers = rand.sample(tickers, 100)
 
 # Finally, we run the experiment. We first have to initialize our class by giving it the list of tickers, a desired
 # start date, and a desired end date.
