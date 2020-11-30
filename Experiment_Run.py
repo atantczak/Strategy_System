@@ -48,6 +48,7 @@ pd.set_option('display.max_columns', None)
 class Experiment():
     def __init__(self, tickers, start_date, end_date):
 
+        # The list of companies being analyzed.
         self.tickers = tickers
 
         # Times and Dates
@@ -59,40 +60,72 @@ class Experiment():
 
         # Price Tracking
         self.price = {}
+
+        # The pct change from a stock's maximum value.
         self.max_change = {}
+
+        # The pct change since buying a stock.
         self.r_pct_change = {}
+
+        # The original price of a stock at the beginning of the experiment.
         self.start_price = {}
+
+        # Initializing a list for closing prices. Depending on the signal you're creating, you may need the previous
+        # ... N closing prices.
         self.close_prices = {}
+
+        # The next period's opening price.
         self.n_open = {}
+
+        # The price a purchase occurs at.
         self.buy_price = {}
+
+        # The current maximum for any given stock.
         self.curr_max = {}
 
         # Iterative Measures
+
+        # A simple counter to determine what iteration the code is on.
         self.c = 0
+
+        # A counter that alternates between 0 and 1; corresponds to "not-owned" and "owned".
         self.b = {}
+
+        # Helps keep track of the maximum price of a stock during the timeline of which it is owned.
         self.max = {}
         self.min = {}
+
+        # {Boolean} The next two determine if a given stock has met the conditions for the algorithm to search for a
+        # ... buying point and then whether the a buying signal has been activated.
         self.buy_search = {}
         self.buy_act = {}
+
+        # {Boolean} Whether a sell signal has been given.
         self.sell_sig = {}
+
+        # --------------------------------------------------------- #
+        # This block is specific to the signal that I am using in this example.
+
+        # Iterative approach to calculating the average return for up and down signals.
         self.avg_up = 0
         self.avg_down = 0
 
-        # Counters
+        # Counters for how many "up"/"down" sell signals have been given.
         self.count_seg_u = 0
         self.count_seg_d = 0
 
-        # --------------------------------------------------------- #
         # Experimental Input/Output
         # Buy Signal, Positive Sell Signal, Negative Sell Signal
         self.b_sig = -0.0625
         self.p_s_sig = 0.065625
         self.n_s_sig = -0.24
 
-        # Original Expection Value of return such that the first iteration will automatically reset the value.
+        # Original Expectation Value of return such that the first iteration will automatically reset the value.
         self.exp_ret = float("-inf")
 
-        # This variable controls for how much we will change our sell signal by.
+        # This variable controls for how much we will change our sell signal by. In this example, we are applying
+        # ... an iterative approach to this algorithm such that it will change the sell signal parameter before
+        # ... running again.
         self.delt_c = 0.05
 
         # This is a counter of how many runs we've been through such that we can avoid an infinite loop by restraining
@@ -264,11 +297,6 @@ class Experiment():
                     self.close_prices["{}".format(ticker)].append(self.price["{}".format(ticker)])
                     self.close_prices["{}".format(ticker)] = self.close_prices["{}".format(ticker)][-30:]
 
-
-                    # The b variable corresponds to tell the program that the stock is currently "bought" and in need
-                    # ... of selling. This is really not needed within the experimental framework but given that this is
-                    # ... the sister code of the simulation code, we're going to leave it.
-
                     try:
                         self.dip_signal(self.b_sig, self.p_s_sig, self.n_s_sig, ticker)
                     except (KeyError):
@@ -374,7 +402,7 @@ class Experiment():
 
         Avg_Final, Avg_Up, Avg_Down, Final = self.experiment()
 
-        if self.experiment_count >= 1:
+        if self.experiment_count >= 3:
             self.experiment_df = pd.DataFrame({'Avg Final %': self.avg_f_l, 'Avg Up Sig %': self.avg_up_l,
                                                'Avg Down Sig %': self.avg_down_l, 'Up Sig Portion': self.portion_u,
                                                'Winning %': self.w_pct, 'Average Win %': self.w_avg, 'Average Loss %':
@@ -436,6 +464,10 @@ class Experiment():
         self.exp_val.append(exp_ret)
         self.n_trades.append(l_f)
 
+        # The next if else statement determine if the current expectation value has exceeded the previous high.
+        # ... if so, the buy signal will change slightly in one direction; if not, it will change slightly in the other
+        # ... direction. Notice the experiment count only goes up if this condition is NOT met. This can be easily
+        # ... changed depending on the desires of a specific experiment.
         if exp_ret >= self.exp_ret:
             self.b_sig = self.b_sig + self.delt_c
             self.delt_c = self.delt_c / 2.0
